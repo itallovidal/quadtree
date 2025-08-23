@@ -1,133 +1,7 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
 #include <SFML/System.hpp>
-#include <iostream>
-#include <random>
-#include <time.h>
-#include <cmath>
-#include "utility.cpp"
-
-#define BALL_COUNT 100
-#define MASS_MIN_NUMBER 100.f
-#define MASS_MAX_NUMBER 120.f
-
-class Particle
-{
-    float mass;
-    sf::Vector2f velocity = {
-        120.f, 120.f};
-    int isSpawned = 0;
-
-    sf::CircleShape shape;
-
-public:
-    Particle()
-    {
-        this->shape.setFillColor(sf::Color::White);
-        this->mass = getRandomNumber(MASS_MIN_NUMBER, MASS_MAX_NUMBER);
-        float radius = sqrt(this->mass) * 3.f;
-        this->shape.setOrigin({radius, radius});
-        this->shape.setRadius(radius);
-    }
-
-    float getMass()
-    {
-        return this->mass;
-    }
-
-    sf::Vector2f getVelocity()
-    {
-        return this->velocity;
-    }
-
-    float radius()
-    {
-        return this->shape.getRadius();
-    }
-
-    sf::CircleShape spawn(float deltaTime)
-    {
-        if (!this->isSpawned)
-        {
-            float x = getRandomNumber(0, WINDOW_WIDTH - this->radius() * 2);
-            float y = getRandomNumber(0, WINDOW_HEIGHT - this->radius() * 2);
-            this->shape.setPosition({x, y});
-            this->isSpawned = 1;
-            return this->shape;
-        }
-
-        return this->move(deltaTime);
-    }
-
-    sf::CircleShape move(float deltaTime)
-    {
-        // S = S₀ + v ⋅ t
-        float x = this->shape.getPosition().x + this->velocity.x * deltaTime;
-        float y = this->shape.getPosition().y + this->velocity.y * deltaTime;
-
-        // handle tunneling
-        sf::Vector2f newPosition = this->handleTunneling({x, y});
-
-        this->shape.setPosition(newPosition);
-        return this->shape;
-    }
-
-    sf::Vector2f getCenterPoint()
-    {
-        sf::Vector2f points =
-            {this->shape.getPosition().x,
-             this->shape.getPosition().y};
-
-        return points;
-    }
-
-    void setPosition(sf::Vector2f newPosition)
-    {
-        this->shape.setPosition(newPosition);
-    }
-
-    void setVelocity(sf::Vector2f newVelocity)
-    {
-        this->velocity = newVelocity;
-    }
-
-    sf::Vector2f handleTunneling(sf::Vector2f coordenate)
-    {
-        if (coordenate.x + this->radius() > WINDOW_WIDTH)
-        {
-            this->velocity.x *= -1;
-            float overlap = coordenate.x + this->radius() - WINDOW_WIDTH;
-
-            coordenate.x -= overlap;
-        }
-
-        if (coordenate.x - this->radius() < 0)
-        {
-            this->velocity.x *= -1;
-            float overlap = abs((coordenate.x - this->radius()) + 0);
-
-            coordenate.x += overlap;
-        }
-
-        if (coordenate.y + this->radius() > WINDOW_HEIGHT)
-        {
-            this->velocity.y *= -1;
-            float overlap = coordenate.y + this->radius() - WINDOW_HEIGHT;
-
-            coordenate.y -= overlap;
-        }
-
-        if (coordenate.y - this->radius() < 0)
-        {
-            this->velocity.y *= -1;
-            float overlap = abs((coordenate.y - this->radius()) + 0);
-
-            coordenate.y += overlap;
-        }
-
-        return coordenate;
-    }
-};
+#include "include/setup.hpp"
 
 class Simulation
 {
@@ -146,18 +20,21 @@ public:
 
     void update(float deltaTime)
     {
+        Boundary boundary({WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2}, WINDOW_HEIGHT);
+        Quadtree initialQuadtree(boundary, MAX_QUADTREE_PARTICLES, this->window);
+
         for (int i = 0; i < this->particles.size(); i++)
         {
             this->window.draw(this->particles[i].spawn(deltaTime));
-
-            for (int j = i + 1; j < this->particles.size(); j++)
-            {
-                this->handleCollision(&this->particles[i], &this->particles[j]);
-            }
+            initialQuadtree.insert(particles[i]);
         }
+
+        initialQuadtree.collisionDetection();
+
+        initialQuadtree.debug(window);
     }
 
-    void handleCollision(Particle *particleA, Particle *particleB)
+    static void handleCollision(Particle *particleA, Particle *particleB)
     {
         float xDistance = abs(particleA->getCenterPoint().x - particleB->getCenterPoint().x);
         float yDistance = abs(particleA->getCenterPoint().y - particleB->getCenterPoint().y);
@@ -171,13 +48,13 @@ public:
         if (distance <= sumOfRadius)
         {
             std::cout << "Collision Ocurred!" << "\n";
-            this->handleImpact(particleA, particleB, distance);
+            Simulation::handleImpact(particleA, particleB, distance);
         }
     }
 
-    void handleImpact(Particle *particleA, Particle *particleB, float distance)
+    static void handleImpact(Particle *particleA, Particle *particleB, float distance)
     {
-        this->handleOverlap(particleA, particleB, distance);
+        Simulation::handleOverlap(particleA, particleB, distance);
 
         // Particle 1
         float massFactor = 2.f * particleB->getMass() / (particleA->getMass() + particleB->getMass());
@@ -205,7 +82,7 @@ public:
         particleB->setVelocity(v2Prime);
     }
 
-    void handleOverlap(Particle *particleA, Particle *particleB, float distance)
+    static void handleOverlap(Particle *particleA, Particle *particleB, float distance)
     {
         float idealDistance = particleA->radius() + particleB->radius();
 

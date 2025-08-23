@@ -12,7 +12,7 @@ using namespace std;
 
 int main()
 {
-    auto window = sf::RenderWindow(sf::VideoMode({WINDOW_WIDTH, WINDOW_HEIGHT}), "Elastic Collision");
+    auto window = sf::RenderWindow(sf::VideoMode({WINDOW_WIDTH, WINDOW_HEIGHT}), "Quadtree");
     window.setFramerateLimit(144);
 
     sf::Font font = loadFont();
@@ -43,7 +43,6 @@ int main()
 
         simulation.update(deltaTime);
         fpsCounter.showFPS(window);
-
         window.display();
     }
 }

@@ -5,7 +5,7 @@
 #include <random>
 
 #define WINDOW_WIDTH 800
-#define WINDOW_HEIGHT 600
+#define WINDOW_HEIGHT 800
 #define HALF_WINDOW_HEIGHT WINDOW_HEIGHT / 2
 #define HALF_WINDOW_WIDTH WINDOW_WIDTH / 2
 
