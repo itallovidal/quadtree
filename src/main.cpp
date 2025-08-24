@@ -5,8 +5,9 @@
 #include <random>
 #include <time.h>
 #include <cmath>
-#include "utility.hpp"
-#include "simulation.cpp"
+#include "include/utility.hpp"
+#include "include/setup.hpp"
+#include "include/simulation.hpp"
 
 using namespace std;
 

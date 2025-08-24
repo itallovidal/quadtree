@@ -1,192 +1,181 @@
-#include "utility.cpp"
+#include "include/quadtree.hpp"
+#include "include/setup.hpp"
+#include "include/simulation.hpp"
 
-class Boundary
+#include "cmath"
+
+Boundary::Boundary(sf::Vector2f coordinates, float length) : coordinates(coordinates), length(length)
 {
-    sf::Vector2f coordinates;
-    float length;
-    sf::RectangleShape preview;
+    this->coordinates = coordinates;
+    this->length = length;
 
-public:
-    Boundary(sf::Vector2f coordinates, float length)
-    {
-        this->coordinates = coordinates;
-        this->length = length;
+    this->preview.setSize({this->length, this->length});
+    this->preview.setOrigin({this->length / 2, this->length / 2});
+    this->preview.setPosition(this->coordinates);
 
-        this->preview.setSize({this->length, this->length});
-        this->preview.setOrigin({this->length / 2, this->length / 2});
-        this->preview.setPosition(this->coordinates);
+    this->preview.setFillColor(sf::Color::Transparent);
+    this->preview.setOutlineColor(sf::Color::White);
+    this->preview.setOutlineThickness(1.f);
+}
 
-        this->preview.setFillColor(sf::Color::Transparent);
-        this->preview.setOutlineColor(sf::Color::White);
-        this->preview.setOutlineThickness(1.f);
-    }
-
-    int contains(Particle p)
-    {
-        float halfSize = (this->getLength() / 2);
-        float boundaryXLeft = this->coordinates.x - halfSize;
-        float boundaryXRight = this->coordinates.x + halfSize;
-
-        float boundaryYTop = this->coordinates.y - halfSize;
-        float boundaryYBottom = this->coordinates.y + halfSize;
-
-        if (p.getCenterPoint().x < boundaryXLeft)
-        {
-            std::cout << "a" << "\n";
-            return 0;
-        }
-
-        if (p.getCenterPoint().x > boundaryXRight)
-        {
-            std::cout << "b" << "\n";
-            return 0;
-        }
-
-        if (p.getCenterPoint().y < boundaryYTop)
-        {
-            std::cout << "c" << "\n";
-            return 0;
-        }
-
-        if (p.getCenterPoint().y > boundaryYBottom)
-        {
-            std::cout << "d" << "\n";
-            return 0;
-        }
-
-        return 1;
-    }
-
-    sf::RectangleShape getPreview()
-    {
-        return this->preview;
-    }
-
-    sf::Vector2f getCoordinates()
-    {
-        return this->coordinates;
-    }
-
-    float getLength()
-    {
-        return this->length;
-    }
-};
-
-class Quadtree
+bool Boundary::contains(Particle p)
 {
-    Boundary boundary;
-    int capacity;
-    Quadtree *topLeft;
-    Quadtree *bottomLeft;
-    Quadtree *topRight;
-    Quadtree *bottomRight;
-    sf::RenderWindow &window;
-    std::vector<Particle> particles;
+    float halfSize = this->getLength() / 2;
+    float boundaryXLeft = this->coordinates.x - halfSize;
+    float boundaryXRight = this->coordinates.x + halfSize;
 
-    int isDivided = 0;
+    float boundaryYTop = this->coordinates.y - halfSize;
+    float boundaryYBottom = this->coordinates.y + halfSize;
 
-public:
-    Quadtree(Boundary boundary, int capacity, sf::RenderWindow &window) : boundary(boundary), window(window)
+    return (
+        p.getCenterPoint().x <= boundaryXRight &&
+        p.getCenterPoint().x >= boundaryXLeft &&
+        p.getCenterPoint().y >= boundaryYTop &&
+        p.getCenterPoint().y <= boundaryYBottom);
+}
+
+sf::RectangleShape Boundary::getPreview()
+{
+    return this->preview;
+}
+
+sf::Vector2f Boundary::getCoordinates()
+{
+    return this->coordinates;
+}
+
+float Boundary::getLength()
+{
+    return this->length;
+}
+
+Quadtree::Quadtree(Boundary boundary, int capacity, sf::RenderWindow &window, Simulation &simulation) : boundary(boundary), capacity(capacity), window(window), topLeft(nullptr), bottomLeft(nullptr), topRight(nullptr), bottomRight(nullptr), isDivided(0), simulation(simulation)
+{
+}
+
+void Quadtree::debug(sf::RenderWindow &window)
+{
+    window.draw(this->boundary.getPreview());
+}
+
+void Quadtree::collisionDetection()
+{
+    if (this->particles.size() < 2)
     {
-        this->capacity = capacity;
-        this->boundary = boundary;
+        return;
     }
 
-    void debug(sf::RenderWindow &window)
+    for (int i = 0; i < this->particles.size(); i++)
     {
-        window.draw(this->boundary.getPreview());
-    }
-
-    void
-    collisionDetection()
-    {
-        if (this->particles.size() < 2)
+        for (int j = i + 1; j < this->particles.size(); j++)
         {
-            return;
-        }
-
-        for (int i = 0; i < this->particles.size() - 1; i++)
-        {
-            Simulation::handleCollision(&this->particles[i], &this->particles[i + 1]);
-        }
-
-        if (this->isDivided)
-        {
-            this->topLeft->collisionDetection();
-            this->topRight->collisionDetection();
-            this->bottomLeft->collisionDetection();
-            this->bottomRight->collisionDetection();
+            this->simulation.handleCollision(&this->particles[i], &this->particles[j]);
         }
     }
 
-    void insert(Particle particle)
+    if (this->isDivided)
     {
-        std::cout << this->particles.size() << "\n";
-        if (!this->boundary.contains(particle))
-        {
-            std::cout << "não contem" << "\n";
-            return;
-        }
+        this->topLeft->collisionDetection();
+        this->topRight->collisionDetection();
+        this->bottomLeft->collisionDetection();
+        this->bottomRight->collisionDetection();
+    }
+}
 
-        if (this->particles.size() < this->capacity)
-        {
-            this->particles.push_back(particle);
-            return;
-        }
+void Quadtree::insert(Particle particle)
+{
+    if (!this->boundary.contains(particle))
+    {
+        return;
+    }
 
-        if (this->boundary.getLength() <= MIN_QUADTREE_SIZE)
-        {
-            return;
-        }
+    if (this->particles.size() < this->capacity && !this->isDivided)
+    {
+        this->particles.push_back(particle);
+        return;
+    }
 
-        if (!this->isDivided)
-        {
-            this->subdivide();
-        }
+    if (this->boundary.getLength() <= MIN_QUADTREE_SIZE)
+    {
+        return;
+    }
 
+    if (!this->isDivided)
+    {
+        this->subdivide();
+
+        for (auto &p : this->particles)
+        {
+            if (this->topLeft->boundary.contains(p))
+                this->topLeft->insert(p);
+            else if (this->topRight->boundary.contains(p))
+                this->topRight->insert(p);
+            else if (this->bottomLeft->boundary.contains(p))
+                this->bottomLeft->insert(p);
+            else if (this->bottomRight->boundary.contains(p))
+                this->bottomRight->insert(p);
+        }
+        this->particles.clear();
+    }
+
+    if (this->topLeft->boundary.contains(particle))
+    {
         this->topLeft->insert(particle);
-        this->topRight->insert(particle);
-
-        this->bottomLeft->insert(particle);
-        this->bottomRight->insert(particle);
+        return;
     }
 
-    void subdivide()
+    if (this->topRight->boundary.contains(particle))
     {
-        // setup
-        Boundary topLeftBoundary(
-            {this->boundary.getCoordinates().x - (this->boundary.getLength() / 4),
-             this->boundary.getCoordinates().y - (this->boundary.getLength() / 4)},
-            this->boundary.getLength() / 2);
-
-        Boundary topRightBoundary(
-            {this->boundary.getCoordinates().x + (this->boundary.getLength() / 4),
-             this->boundary.getCoordinates().y - (this->boundary.getLength() / 4)},
-            this->boundary.getLength() / 2);
-
-        Boundary bottomLeftBoundary(
-            {this->boundary.getCoordinates().x / 2,
-             this->boundary.getCoordinates().y + (this->boundary.getLength() / 4)},
-            this->boundary.getLength() / 2);
-
-        Boundary bottomRightBoundary(
-            {this->boundary.getCoordinates().x + (this->boundary.getLength() / 4),
-             this->boundary.getCoordinates().y + (this->boundary.getLength() / 4)},
-            this->boundary.getLength() / 2);
-
-        // creating
-        this->topLeft = new Quadtree(topLeftBoundary, this->capacity, this->window);
-        this->topRight = new Quadtree(topRightBoundary, this->capacity, this->window);
-        this->bottomLeft = new Quadtree(bottomLeftBoundary, this->capacity, this->window);
-        this->bottomRight = new Quadtree(bottomRightBoundary, this->capacity, this->window);
-
-        // debug
-        this->topRight->debug(this->window);
-        this->topLeft->debug(this->window);
-        this->bottomLeft->debug(this->window);
-        this->bottomRight->debug(this->window);
-
-        this->isDivided = 1;
+        this->topRight->insert(particle);
+        return;
     }
-};
+
+    if (this->bottomLeft->boundary.contains(particle))
+    {
+        this->bottomLeft->insert(particle);
+        return;
+    }
+    if (this->bottomRight->boundary.contains(particle))
+    {
+        this->bottomRight->insert(particle);
+        return;
+    }
+}
+
+void Quadtree::subdivide()
+{
+    // setup
+    Boundary topLeftBoundary(
+        {this->boundary.getCoordinates().x - (this->boundary.getLength() / 4),
+         this->boundary.getCoordinates().y - (this->boundary.getLength() / 4)},
+        this->boundary.getLength() / 2);
+
+    Boundary topRightBoundary(
+        {this->boundary.getCoordinates().x + (this->boundary.getLength() / 4),
+         this->boundary.getCoordinates().y - (this->boundary.getLength() / 4)},
+        this->boundary.getLength() / 2);
+
+    Boundary bottomLeftBoundary(
+        {this->boundary.getCoordinates().x - (this->boundary.getLength() / 4),
+         this->boundary.getCoordinates().y + (this->boundary.getLength() / 4)},
+        this->boundary.getLength() / 2);
+
+    Boundary bottomRightBoundary(
+        {this->boundary.getCoordinates().x + (this->boundary.getLength() / 4),
+         this->boundary.getCoordinates().y + (this->boundary.getLength() / 4)},
+        this->boundary.getLength() / 2);
+
+    // creating
+    this->topLeft = new Quadtree(topLeftBoundary, this->capacity, this->window, this->simulation);
+    this->topRight = new Quadtree(topRightBoundary, this->capacity, this->window, this->simulation);
+    this->bottomLeft = new Quadtree(bottomLeftBoundary, this->capacity, this->window, this->simulation);
+    this->bottomRight = new Quadtree(bottomRightBoundary, this->capacity, this->window, this->simulation);
+
+    // debug
+    this->topRight->debug(this->window);
+    this->topLeft->debug(this->window);
+    this->bottomLeft->debug(this->window);
+    this->bottomRight->debug(this->window);
+
+    this->isDivided = 1;
+}

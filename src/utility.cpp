@@ -1,4 +1,6 @@
-#include "utility.hpp"
+#include "include/utility.hpp"
+#include <SFML/Graphics.hpp>
+#include <random>
 #include <sstream>
 #include <iomanip>
 #include <iostream>

@@ -1,119 +1,103 @@
-#include "utility.cpp"
+#include "include/particle.hpp"
+#include "include/utility.hpp"
+#include "include/setup.hpp"
+#include <SFML/Graphics.hpp>
 
-class Particle
+Particle::Particle()
 {
-    float mass;
-    sf::Vector2f velocity = {
-        120.f, 120.f};
-    int isSpawned = 0;
+    this->shape.setFillColor(sf::Color::White);
+    this->mass = getRandomNumber(MASS_MIN_NUMBER, MASS_MAX_NUMBER);
+    float radius = sqrt(this->mass) * 2.f;
+    this->shape.setOrigin({radius, radius});
+    this->shape.setRadius(radius);
+    this->velocity = {120.f, 120.f};
+    this->isSpawned = 0;
+}
 
-    sf::CircleShape shape;
+float Particle::getMass()
+{
+    return this->mass;
+}
 
-public:
-    Particle()
+sf::Vector2f Particle::getVelocity()
+{
+    return this->velocity;
+}
+
+float Particle::radius()
+{
+    return this->shape.getRadius();
+}
+
+sf::CircleShape Particle::spawn(float deltaTime)
+{
+    if (!this->isSpawned)
     {
-        this->shape.setFillColor(sf::Color::White);
-        this->mass = getRandomNumber(MASS_MIN_NUMBER, MASS_MAX_NUMBER);
-        float radius = sqrt(this->mass) * 3.f;
-        this->shape.setOrigin({radius, radius});
-        this->shape.setRadius(radius);
-    }
-
-    float getMass()
-    {
-        return this->mass;
-    }
-
-    sf::Vector2f getVelocity()
-    {
-        return this->velocity;
-    }
-
-    float radius()
-    {
-        return this->shape.getRadius();
-    }
-
-    sf::CircleShape spawn(float deltaTime)
-    {
-        if (!this->isSpawned)
-        {
-            float x = getRandomNumber(0, WINDOW_WIDTH - this->radius() * 2);
-            float y = getRandomNumber(0, WINDOW_HEIGHT - this->radius() * 2);
-            this->shape.setPosition({x, y});
-            this->isSpawned = 1;
-            return this->shape;
-        }
-
-        return this->move(deltaTime);
-    }
-
-    sf::CircleShape move(float deltaTime)
-    {
-        // S = S₀ + v ⋅ t
-        float x = this->shape.getPosition().x + this->velocity.x * deltaTime;
-        float y = this->shape.getPosition().y + this->velocity.y * deltaTime;
-
-        // handle tunneling
-        sf::Vector2f newPosition = this->handleTunneling({x, y});
-
-        this->shape.setPosition(newPosition);
+        float x = getRandomNumber(0, WINDOW_WIDTH - this->radius() * 2);
+        float y = getRandomNumber(0, WINDOW_HEIGHT - this->radius() * 2);
+        this->shape.setPosition({x, y});
+        this->isSpawned = 1;
         return this->shape;
     }
 
-    sf::Vector2f getCenterPoint()
-    {
-        sf::Vector2f points =
-            {this->shape.getPosition().x,
-             this->shape.getPosition().y};
+    return this->move(deltaTime);
+}
 
-        return points;
+sf::CircleShape Particle::move(float deltaTime)
+{
+    float x = this->shape.getPosition().x + this->velocity.x * deltaTime;
+    float y = this->shape.getPosition().y + this->velocity.y * deltaTime;
+
+    sf::Vector2f newPosition = this->handleTunneling({x, y});
+
+    this->shape.setPosition(newPosition);
+    return this->shape;
+}
+
+sf::Vector2f Particle::getCenterPoint()
+{
+    return this->shape.getPosition();
+}
+
+void Particle::setPosition(sf::Vector2f newPosition)
+{
+    this->shape.setPosition(newPosition);
+}
+
+void Particle::setVelocity(sf::Vector2f newVelocity)
+{
+    this->velocity = newVelocity;
+}
+
+sf::Vector2f Particle::handleTunneling(sf::Vector2f coordenate)
+{
+    if (coordenate.x + this->radius() > WINDOW_WIDTH)
+    {
+        this->velocity.x *= -1;
+        float overlap = coordenate.x + this->radius() - WINDOW_WIDTH;
+        coordenate.x -= overlap;
     }
 
-    void setPosition(sf::Vector2f newPosition)
+    if (coordenate.x - this->radius() < 0)
     {
-        this->shape.setPosition(newPosition);
+        this->velocity.x *= -1;
+        float overlap = abs((coordenate.x - this->radius()) + 0);
+        coordenate.x += overlap;
     }
 
-    void setVelocity(sf::Vector2f newVelocity)
+    if (coordenate.y + this->radius() > WINDOW_HEIGHT)
     {
-        this->velocity = newVelocity;
+        this->velocity.y *= -1;
+        float overlap = coordenate.y + this->radius() - WINDOW_HEIGHT;
+        coordenate.y -= overlap;
     }
 
-    sf::Vector2f handleTunneling(sf::Vector2f coordenate)
+    if (coordenate.y - this->radius() < 0)
     {
-        if (coordenate.x + this->radius() > WINDOW_WIDTH)
-        {
-            this->velocity.x *= -1;
-            float overlap = coordenate.x + this->radius() - WINDOW_WIDTH;
-
-            coordenate.x -= overlap;
-        }
-
-        if (coordenate.x - this->radius() < 0)
-        {
-            this->velocity.x *= -1;
-            float overlap = abs((coordenate.x - this->radius()) + 0);
-
-            coordenate.x += overlap;
-        }
-
-        if (coordenate.y + this->radius() > WINDOW_HEIGHT)
-        {
-            this->velocity.y *= -1;
-            float overlap = coordenate.y + this->radius() - WINDOW_HEIGHT;
-
-            coordenate.y -= overlap;
-        }
-
-        if (coordenate.y - this->radius() < 0)
-        {
-            this->velocity.y *= -1;
-            float overlap = abs((coordenate.y - this->radius()) + 0);
-
-            coordenate.y += overlap;
-        }
-
-        return coordenate;
+        this->velocity.y *= -1;
+        float overlap = abs((coordenate.y - this->radius()) + 0);
+        coordenate.y += overlap;
     }
-};
+
+    return coordenate;
+}

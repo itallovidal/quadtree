@@ -1,13 +1,8 @@
-#ifndef UTILITY_HPP
-#define UTILITY_HPP
+#ifndef UTILITY
+#define UTILITY
 
-#include <SFML/Graphics.hpp>
 #include <random>
-
-#define WINDOW_WIDTH 800
-#define WINDOW_HEIGHT 800
-#define HALF_WINDOW_HEIGHT WINDOW_HEIGHT / 2
-#define HALF_WINDOW_WIDTH WINDOW_WIDTH / 2
+#include <SFML/Graphics.hpp>
 
 extern std::mt19937 gen;
 
@@ -27,4 +22,4 @@ public:
     void showFPS(sf::RenderWindow &window);
 };
 
-#endif // UTILITY_HPP
+#endif
