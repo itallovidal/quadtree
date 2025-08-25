@@ -18,7 +18,7 @@ Boundary::Boundary(sf::Vector2f coordinates, float length) : coordinates(coordin
     this->preview.setOutlineThickness(1.f);
 }
 
-bool Boundary::contains(Particle p)
+bool Boundary::contains(Particle *p)
 {
     float halfSize = this->getLength() / 2;
     float boundaryXLeft = this->coordinates.x - halfSize;
@@ -28,10 +28,10 @@ bool Boundary::contains(Particle p)
     float boundaryYBottom = this->coordinates.y + halfSize;
 
     return (
-        p.getCenterPoint().x <= boundaryXRight &&
-        p.getCenterPoint().x >= boundaryXLeft &&
-        p.getCenterPoint().y >= boundaryYTop &&
-        p.getCenterPoint().y <= boundaryYBottom);
+        p->getCenterPoint().x <= boundaryXRight &&
+        p->getCenterPoint().x >= boundaryXLeft &&
+        p->getCenterPoint().y >= boundaryYTop &&
+        p->getCenterPoint().y <= boundaryYBottom);
 }
 
 sf::RectangleShape Boundary::getPreview()
@@ -60,16 +60,12 @@ void Quadtree::debug(sf::RenderWindow &window)
 
 void Quadtree::collisionDetection()
 {
-    if (this->particles.size() < 2)
-    {
-        return;
-    }
 
     for (int i = 0; i < this->particles.size(); i++)
     {
         for (int j = i + 1; j < this->particles.size(); j++)
         {
-            this->simulation.handleCollision(&this->particles[i], &this->particles[j]);
+            this->simulation.handleCollision(this->particles[i], this->particles[j]);
         }
     }
 
@@ -82,7 +78,7 @@ void Quadtree::collisionDetection()
     }
 }
 
-void Quadtree::insert(Particle particle)
+void Quadtree::insert(Particle *particle)
 {
     if (!this->boundary.contains(particle))
     {
@@ -172,10 +168,14 @@ void Quadtree::subdivide()
     this->bottomRight = new Quadtree(bottomRightBoundary, this->capacity, this->window, this->simulation);
 
     // debug
-    this->topRight->debug(this->window);
-    this->topLeft->debug(this->window);
-    this->bottomLeft->debug(this->window);
-    this->bottomRight->debug(this->window);
+
+    if (QUADTREE_DEBUG)
+    {
+        this->topRight->debug(this->window);
+        this->topLeft->debug(this->window);
+        this->bottomLeft->debug(this->window);
+        this->bottomRight->debug(this->window);
+    }
 
     this->isDivided = 1;
 }

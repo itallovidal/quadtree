@@ -7,7 +7,7 @@ Particle::Particle()
 {
     this->shape.setFillColor(sf::Color::White);
     this->mass = getRandomNumber(MASS_MIN_NUMBER, MASS_MAX_NUMBER);
-    float radius = sqrt(this->mass) * 2.f;
+    float radius = sqrt(this->mass);
     this->shape.setOrigin({radius, radius});
     this->shape.setRadius(radius);
     this->velocity = {120.f, 120.f};

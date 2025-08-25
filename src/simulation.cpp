@@ -23,7 +23,7 @@ void Simulation::update(float deltaTime)
     for (int i = 0; i < this->particles.size(); i++)
     {
         this->window.draw(this->particles[i].spawn(deltaTime));
-        initialQuadtree.insert(particles[i]);
+        initialQuadtree.insert(&particles[i]);
     }
 
     initialQuadtree.collisionDetection();

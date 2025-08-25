@@ -18,7 +18,7 @@ private:
 
 public:
     Boundary(sf::Vector2f coordinates, float length);
-    bool contains(Particle p);
+    bool contains(Particle *p);
     sf::RectangleShape getPreview();
     sf::Vector2f getCoordinates();
     float getLength();
@@ -34,13 +34,13 @@ private:
     Quadtree *topRight;
     Quadtree *bottomRight;
     sf::RenderWindow &window;
-    std::vector<Particle> particles;
+    std::vector<Particle *> particles;
     int isDivided = 0;
     Simulation &simulation;
 
 public:
     Quadtree(Boundary boundary, int capacity, sf::RenderWindow &window, Simulation &simulation);
-    void insert(Particle particle);
+    void insert(Particle *particle);
     void collisionDetection();
     void debug(sf::RenderWindow &window);
     void subdivide();
