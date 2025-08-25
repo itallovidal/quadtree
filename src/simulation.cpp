@@ -26,7 +26,27 @@ void Simulation::update(float deltaTime)
         initialQuadtree.insert(&particles[i]);
     }
 
-    initialQuadtree.collisionDetection();
+    this->HandleQuadtreeCollision(&initialQuadtree);
+}
+
+void Simulation::HandleQuadtreeCollision(Quadtree *quadtree)
+{
+    std::vector<Particle *> particles = quadtree->getParticles();
+    for (int i = 0; i < particles.size(); i++)
+    {
+        for (int j = i + 1; j < particles.size(); j++)
+        {
+            this->handleCollision(particles[i], particles[j]);
+        }
+    }
+
+    if (quadtree->getIsDivided())
+    {
+        this->HandleQuadtreeCollision(quadtree->getSubtree(TREE_LOCATION::BOTTOM_LEFT));
+        this->HandleQuadtreeCollision(quadtree->getSubtree(TREE_LOCATION::BOTTOM_RIGHT));
+        this->HandleQuadtreeCollision(quadtree->getSubtree(TREE_LOCATION::TOP_LEFT));
+        this->HandleQuadtreeCollision(quadtree->getSubtree(TREE_LOCATION::TOP_RIGHT));
+    }
 }
 
 void Simulation::handleCollision(Particle *particleA, Particle *particleB)

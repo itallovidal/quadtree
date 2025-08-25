@@ -7,6 +7,14 @@
 #include "simulation.hpp"
 #include <vector>
 
+enum TREE_LOCATION
+{
+    TOP_LEFT,
+    TOP_RIGHT,
+    BOTTOM_LEFT,
+    BOTTOM_RIGHT
+};
+
 class Simulation;
 
 class Boundary
@@ -41,9 +49,11 @@ private:
 public:
     Quadtree(Boundary boundary, int capacity, sf::RenderWindow &window, Simulation &simulation);
     void insert(Particle *particle);
-    void collisionDetection();
     void debug(sf::RenderWindow &window);
     void subdivide();
+    std::vector<Particle *> getParticles();
+    bool getIsDivided();
+    Quadtree *getSubtree(TREE_LOCATION location);
 };
 
 #endif

@@ -3,6 +3,7 @@
 #include "include/simulation.hpp"
 
 #include "cmath"
+#include <vector>
 
 Boundary::Boundary(sf::Vector2f coordinates, float length) : coordinates(coordinates), length(length)
 {
@@ -58,24 +59,9 @@ void Quadtree::debug(sf::RenderWindow &window)
     window.draw(this->boundary.getPreview());
 }
 
-void Quadtree::collisionDetection()
+std::vector<Particle *> Quadtree::getParticles()
 {
-
-    for (int i = 0; i < this->particles.size(); i++)
-    {
-        for (int j = i + 1; j < this->particles.size(); j++)
-        {
-            this->simulation.handleCollision(this->particles[i], this->particles[j]);
-        }
-    }
-
-    if (this->isDivided)
-    {
-        this->topLeft->collisionDetection();
-        this->topRight->collisionDetection();
-        this->bottomLeft->collisionDetection();
-        this->bottomRight->collisionDetection();
-    }
+    return this->particles;
 }
 
 void Quadtree::insert(Particle *particle)
@@ -136,6 +122,30 @@ void Quadtree::insert(Particle *particle)
         this->bottomRight->insert(particle);
         return;
     }
+}
+
+bool Quadtree::getIsDivided()
+{
+    return this->isDivided;
+}
+
+Quadtree *Quadtree::getSubtree(TREE_LOCATION location)
+{
+    switch (location)
+    {
+    case TREE_LOCATION::TOP_LEFT:
+        return this->topLeft;
+    case TREE_LOCATION::TOP_RIGHT:
+        return this->topRight;
+    case TREE_LOCATION::BOTTOM_LEFT:
+        return this->bottomLeft;
+    case TREE_LOCATION::BOTTOM_RIGHT:
+        return this->bottomRight;
+    default:
+        break;
+    }
+
+    return nullptr;
 }
 
 void Quadtree::subdivide()
