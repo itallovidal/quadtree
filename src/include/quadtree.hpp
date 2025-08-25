@@ -45,6 +45,7 @@ private:
     std::vector<Particle *> particles;
     int isDivided = 0;
     Simulation &simulation;
+    void insertInSubtree(Particle *);
 
 public:
     Quadtree(Boundary boundary, int capacity, sf::RenderWindow &window, Simulation &simulation);

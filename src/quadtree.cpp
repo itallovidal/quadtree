@@ -86,20 +86,21 @@ void Quadtree::insert(Particle *particle)
     {
         this->subdivide();
 
-        for (auto &p : this->particles)
+        for (int i = 0; i < this->particles.size(); i++)
         {
-            if (this->topLeft->boundary.contains(p))
-                this->topLeft->insert(p);
-            else if (this->topRight->boundary.contains(p))
-                this->topRight->insert(p);
-            else if (this->bottomLeft->boundary.contains(p))
-                this->bottomLeft->insert(p);
-            else if (this->bottomRight->boundary.contains(p))
-                this->bottomRight->insert(p);
+            // insert in subtrees to empty this vector
+            this->insertInSubtree(this->particles[i]);
         }
+
         this->particles.clear();
     }
 
+    // foward this particle to next subtrees
+    this->insertInSubtree(particle);
+}
+
+void Quadtree::insertInSubtree(Particle *particle)
+{
     if (this->topLeft->boundary.contains(particle))
     {
         this->topLeft->insert(particle);

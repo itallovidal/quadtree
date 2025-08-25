@@ -4,8 +4,6 @@
 #include <SFML/Window.hpp>
 #include <cmath>
 
-// Implementação dos métodos da classe Simulation
-
 Simulation::Simulation(sf::RenderWindow &window) : window(window)
 {
     for (int i = 0; i < BALL_COUNT; i++)
