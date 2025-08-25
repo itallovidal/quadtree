@@ -49,6 +49,8 @@ private:
 
 public:
     Quadtree(Boundary boundary, int capacity, sf::RenderWindow &window, Simulation &simulation);
+    ~Quadtree();
+
     void insert(Particle *particle);
     void debug(sf::RenderWindow &window);
     void subdivide();

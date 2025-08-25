@@ -54,6 +54,14 @@ Quadtree::Quadtree(Boundary boundary, int capacity, sf::RenderWindow &window, Si
 {
 }
 
+Quadtree::~Quadtree()
+{
+    delete this->topLeft;
+    delete this->topRight;
+    delete this->bottomLeft;
+    delete this->bottomRight;
+}
+
 void Quadtree::debug(sf::RenderWindow &window)
 {
     window.draw(this->boundary.getPreview());
